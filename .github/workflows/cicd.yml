@@ -147,8 +147,8 @@ jobs:
         GIT_USERNAME: ${{ secrets.GIT_USERNAME }}
         GIT_PASSWORD: ${{ secrets.GIT_PASSWORD }}
       run: |
-         git clone https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/victoria-cloud-AE/Kubernetes-repo.git
-         
+         git clone https://${{ secrets.GIT_USERNAME }}:${{ secrets.GIT_PASSWORD }}@github.com/victoria-cloud-AE/Kubernetes-repo.git
+
          cd Kubernetes-repo
          git config user.email "victoriaenuma@gmail.com"
          git config user.name "victoria-cloud-AE"
