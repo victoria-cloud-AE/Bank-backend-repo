@@ -37,7 +37,7 @@ jobs:
 
     - name: Build Docker image
       run: |
-        docker build -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }} ./Bank-backend-repo/main_bank_app_backend
+        docker build -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }} ./Bank-backend-repo
         docker tag ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }} ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:latest
   
     - name: Push Docker images to ECR
