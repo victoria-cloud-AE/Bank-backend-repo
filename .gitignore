@@ -35,4 +35,3 @@ build/
 
 backend-key
 .env
-.src/main/resources/application.properties.env

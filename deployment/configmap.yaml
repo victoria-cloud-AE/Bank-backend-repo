@@ -3,6 +3,6 @@
 # metadata:
 #   name: bank-backend-config
 # data:
-#   DB_HOST: "34.27.23.176"
+#   DB_HOST: "production-mysql-db.csf2ue80aaqe.us-east-1.rds.amazonaws.com"
 #   DB_PORT: "3306"
-#   DB_NAME: "online_banking_system"
+#   DB_NAME: "production_db"
