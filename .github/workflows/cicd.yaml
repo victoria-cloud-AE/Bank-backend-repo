@@ -5,6 +5,11 @@ on:
     branches:
       - main
   workflow_dispatch:
+
+permissions:
+  contents: write
+
+
 env:
   DOCKER_IMAGE_NAME: victoriacloud21stcentury/bank-backend  # Change this
   AZURE_RESOURCE_GROUP: aks-platform-dev-rg  # Change this
