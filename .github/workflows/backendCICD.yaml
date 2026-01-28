@@ -1,0 +1,167 @@
+name: Backend CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'  # Trigger only on backend changes
+  workflow_dispatch:  # Allow manual trigger
+
+env:
+  DOCKER_IMAGE_NAME: victoriacloud21stcentury/bank-backend  # Change this
+  AZURE_RESOURCE_GROUP: aks-platform-dev-rg  # Change this
+  AKS_CLUSTER_NAME: aks-platform-dev-aks  # Change this
+  DEPLOYMENT_FILE: deployment/deploy.yaml  # Path to your deployment file
+  CLUSTER_ISSUER_FILE: deployment/clusterissuer.yaml  # Path to cluster issuer
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Step 2: Set up Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Step 3: Login to Docker Hub
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # Step 4: Build and push Docker image
+      - name: Build and Push Docker Image
+        id: docker_build
+        run: |
+          # Generate image tag using commit SHA
+          IMAGE_TAG="v${{ github.run_number }}-${GITHUB_SHA::7}"
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+          
+          # Build the Docker image
+          docker build -t ${{ env.DOCKER_IMAGE_NAME }}:$IMAGE_TAG \
+                       -t ${{ env.DOCKER_IMAGE_NAME }}:latest \
+                       .
+          
+          # Push both tags to Docker Hub
+          docker push ${{ env.DOCKER_IMAGE_NAME }}:$IMAGE_TAG
+          docker push ${{ env.DOCKER_IMAGE_NAME }}:latest
+          
+          echo "Image built and pushed: ${{ env.DOCKER_IMAGE_NAME }}:$IMAGE_TAG"
+
+      # Step 5: Update Kubernetes deployment manifest
+      - name: Update Kubernetes Deployment Manifest
+        run: |
+          # Update the image tag in deployment.yaml
+          sed -i "s|image: .*bank-backend.*|image: ${{ env.DOCKER_IMAGE_NAME }}:${{ env.IMAGE_TAG }}|g" ${{ env.DEPLOYMENT_FILE }}
+          
+          # Verify the change
+          echo "Updated deployment.yaml:"
+          grep "image:" ${{ env.DEPLOYMENT_FILE }}
+
+      # Step 6: Login to Azure
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # Step 7: Get AKS credentials
+      - name: Get AKS Credentials
+        run: |
+          az aks get-credentials \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --name ${{ env.AKS_CLUSTER_NAME }} \
+            --overwrite-existing
+          
+          echo "Kubeconfig exported successfully"
+
+      # Step 8: Verify cluster connection
+      - name: Verify Cluster Connection
+        run: |
+          kubectl cluster-info
+          kubectl version --short
+
+      # Step 9: Apply Cluster Issuer
+      - name: Apply Cluster Issuer
+        run: |
+          if [ -f "${{ env.CLUSTER_ISSUER_FILE }}" ]; then
+            kubectl apply -f ${{ env.CLUSTER_ISSUER_FILE }}
+            echo "Cluster Issuer applied successfully"
+          else
+            echo "Cluster Issuer file not found, skipping..."
+          fi
+
+      # Step 10: Apply Deployment
+      - name: Apply Kubernetes Deployment
+        run: |
+          kubectl apply -f ${{ env.DEPLOYMENT_FILE }}
+          echo "Deployment applied successfully"
+
+      # Step 11: Wait for deployment rollout
+      - name: Wait for Deployment Rollout
+        run: |
+          # Extract deployment name from the file
+          DEPLOYMENT_NAME=$(grep "name:" ${{ env.DEPLOYMENT_FILE }} | head -1 | awk '{print $2}')
+          
+          kubectl rollout status deployment/$DEPLOYMENT_NAME --timeout=5m
+          echo "Deployment rollout completed"
+
+      # Step 12: Verify deployment - Get Nodes
+      - name: Get Kubernetes Nodes
+        run: |
+          echo "====== KUBERNETES NODES ======"
+          kubectl get nodes -o wide
+
+      # Step 13: Verify deployment - Get Pods
+      - name: Get Kubernetes Pods
+        run: |
+          echo "====== KUBERNETES PODS ======"
+          kubectl get pods -o wide
+          
+          echo "====== POD DETAILS ======"
+          kubectl get pods -l app=bank-backend -o wide
+
+      # Step 14: Get Service information
+      - name: Get Services
+        run: |
+          echo "====== KUBERNETES SERVICES ======"
+          kubectl get svc
+
+      # Step 15: Clean up local Docker images
+      - name: Clean up Docker Images
+        if: always()
+        run: |
+          echo "Cleaning up Docker images..."
+          docker rmi ${{ env.DOCKER_IMAGE_NAME }}:${{ env.IMAGE_TAG }} || true
+          docker rmi ${{ env.DOCKER_IMAGE_NAME }}:latest || true
+          docker system prune -f
+          echo "Docker cleanup completed"
+
+      # Step 16: Clean up Git repository on runner
+      - name: Clean up Git Repository
+        if: always()
+        run: |
+          echo "Cleaning up Git repository..."
+          cd $GITHUB_WORKSPACE
+          git clean -ffdx
+          git reset --hard
+          echo "Git repository cleanup completed"
+
+      # Step 17: Deployment Summary
+      - name: Deployment Summary
+        if: success()
+        run: |
+          echo "=========================================="
+          echo "🚀 DEPLOYMENT SUCCESSFUL!"
+          echo "=========================================="
+          echo "Image: ${{ env.DOCKER_IMAGE_NAME }}:${{ env.IMAGE_TAG }}"
+          echo "Cluster: ${{ env.AKS_CLUSTER_NAME }}"
+          echo "Resource Group: ${{ env.AZURE_RESOURCE_GROUP }}"
+          echo "=========================================="
