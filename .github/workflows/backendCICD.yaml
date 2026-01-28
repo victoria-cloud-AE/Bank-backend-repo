@@ -4,10 +4,7 @@ on:
   push:
     branches:
       - main
-    paths:
-      - '**'  # Trigger only on backend changes
-  workflow_dispatch:  # Allow manual trigger
-
+  workflow_dispatch:
 env:
   DOCKER_IMAGE_NAME: victoriacloud21stcentury/bank-backend  # Change this
   AZURE_RESOURCE_GROUP: aks-platform-dev-rg  # Change this
