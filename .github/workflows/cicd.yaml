@@ -83,7 +83,7 @@ jobs:
       - name: Verify Cluster Connection
         run: |
           kubectl cluster-info
-          kubectl version --short
+          kubectl version 
 
       # Step 9: Apply Cluster Issuer
       - name: Apply Cluster Issuer
