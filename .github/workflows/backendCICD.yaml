@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'backend/**'  # Trigger only on backend changes
+      - '**'  # Trigger only on backend changes
   workflow_dispatch:  # Allow manual trigger
 
 env:
