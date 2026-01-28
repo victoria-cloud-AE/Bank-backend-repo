@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: bank-backend-container
-        image: bank-backend  # Replace this with your Docker image name
+        image: victoriacloud21stcentury/bank-backend:v6-8037096
         ports:
         - containerPort: 8080  # Replace with your app's port if necessary
         env:
