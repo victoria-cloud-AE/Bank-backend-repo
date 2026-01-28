@@ -114,6 +114,13 @@
 		</dependency> -->
 
 	</dependencies>
+	<repositories>
+    <repository>
+        <id>microsoft</id>
+        <url>https://maven.microsoft.com/maven2/</url>
+    </repository>
+     </repositories>
+
 
 	<build>
 		<plugins>
