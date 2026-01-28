@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: bank-backend-container
-        image: victoriacloud21stcentury/bank-backend:v9-f4d681e
+        image: victoriacloud21stcentury/bank-backend:v10-006e3d4
         ports:
         - containerPort: 8080  # Replace with your app's port if necessary
         env:
