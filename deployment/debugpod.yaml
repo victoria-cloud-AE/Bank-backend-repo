@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: debug-pod
+spec:
+  containers:
+  - name: debug
+    image: busybox
+    command: ["sleep","3600"]
+    env:
+    - name: DB_HOST
+      valueFrom:
+        configMapKeyRef:
+          name: bank-backend-config
+          key: DB_HOST
+    - name: DB_PORT
+      valueFrom:
+        configMapKeyRef:
+          name: bank-backend-config
+          key: DB_PORT
+    - name: DB_NAME
+      valueFrom:
+        configMapKeyRef:
+          name: bank-backend-config
+          key: DB_NAME
+    - name: DB_USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: bank-backend-secret
+          key: DB_USERNAME
+    - name: DB_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: bank-backend-secret
+          key: DB_PASSWORD
+
