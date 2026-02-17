@@ -41,8 +41,10 @@ public class SecurityConfig {
 		        .cors(cors -> cors.disable())
 		    
 				.authorizeHttpRequests(
-						auth -> auth.requestMatchers("/api/user/login", "/api/user/admin/register").permitAll()
+						auth -> auth
 						.requestMatchers("/health").permitAll()
+						.requestMatchers("/api/user/login", "/api/user/admin/register").permitAll()
+						
 						// this APIs are only accessible by ADMIN
 						.requestMatchers("/api/bank/register","/api/bank/fetch/all", "/api/bank/fetch/user",
 								"/api/bank/account/fetch/all", "/api/bank/transaction/all")
